@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+
+    <script>
+        // Ignore this in your implementation
+        window.isMbscDemo = true;
+    </script>
+
+    <title>Timeline vs time grid</title>
+
+    <!-- Mobiscroll JS and CSS Includes -->
+    <link rel="stylesheet" href="css/mobiscroll.javascript.min.css">
+    <script src="js/mobiscroll.javascript.min.js"></script>
+
+    <style type="text/css">
+    body {
+        margin: 0;
+        padding: 0;
+    }
+
+    body,
+    html {
+        height: 100%;
+    }
+
+    .demo-timeline-time-grid,
+    .demo-timeline-time-grid .mbsc-page {
+        height: 100%;
+    }
+
+    </style>
+
+</head>
+<body>
+
+<div mbsc-page class="demo-timeline-time-grid">
+  <div style="height:100%">
+      <div id="demo-timeline-time-grid"></div>
+  </div>
+</div>
+
+<div id="demo-add-popup">
+    <div class="mbsc-form-group">
+        <label>
+            title
+            <input mbsc-input id="event-title" />
+        </label>
+        <label>
+            Description
+            <textarea mbsc-textarea name="" id="event-desc" cols="30" rows="10"></textarea>
+        </label>
+    </div>
+    <div class="mbsc-form-group">
+        <label>
+            All-day
+            <input mbsc-switch id="event-all-day" type="checkbox"/>
+        </label>
+        <label>
+            Start
+            <input mbsc-input id="start-input"/>
+        </label>
+        <label >
+            End
+            <input mbsc-input id="end-input">
+        </label>
+        <div id="event-date"></div>
+        <div id="event-color-picker" class="event-color-c">
+            <div class="event-color-label"> Color </div>
+            <div id="event-color-cont">
+                <div id="event-color" class="event-color"></div>
+            </div>
+        </div>
+        <label>
+            Show as busy
+            <input id="event-status-busy" mbsc-segmented type="radio" name="event-status" value="busy" >
+        </label>
+        <label>
+            Show as free
+            <input id="event-status-free" mbsc-segmented type="radio" name="event-status" value="free" >
+        </label>
+        <div class="mbsc-button-group">
+            <button class="mbsc-button-block" id="event-delete" mbsc-button data-color="danger" data-variant="outline">Delete event</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    mobiscroll.setOptions({
+        locale: mobiscroll.localeEn,  
+        theme: 'ios',                 
+        themeVariant: 'light',
+    });
+    
+    var calendar, popup = mobiscroll.eventcalendar('#demo-timeline-time-grid', {
+
+        dataTimezone: 'utc',
+        displayTimezone: 'local',
+        view: {                       
+            timeline: {
+                type: 'day',
+                popover: true
+            }
+        },
+        resources: [{                 
+            id: 1,
+            name: '2            ',
+            color: '#fdf500',
+            edittable: false,
+            free: true,
+            allDay: false
+        }, {
+            id: 2,
+            name: '3',
+            color: '#ff4600'
+        }, {
+            id: 3,
+            name: '4',
+            color: '#ff0101'
+        }, {
+            id: 4,
+            name: '5',
+            color: '#239a21'
+        }, {
+            id: 5,
+            name: '6',
+            color: '#8f1ed6'
+        }, {
+            id: 6,
+            name: '7',
+            color: '#01adff'
+        }],
+        clickToCreate: true,
+        dragToCreate: true,
+        dragToResize: true,
+        eventDelete: true,
+        dragToMove:true
+    });
+    
+    mobiscroll.util.http.getJson('https://trial.mobiscroll.com/timeline-events/', function (events) {
+        calendar.setEvents(events);
+    }, 'jsonp');
+
+    popup = $('#demo-add-popup').mobiscroll().popup({
+        display: 'bottom',
+        contentPadding: false,
+        fullScreen: true,
+        onClose: function () {
+            if (deleteEvent){
+                calendar.removeEvent(tempEvent);
+            }else if (restoreEvent) {
+                calendar.updateEvent(oldEvent);
+            }
+        },
+        responsive: {
+            medium: {
+                display: 'anchored',
+                with: 400,
+                fullScreen: false,
+                touchUi: false
+            }
+        }
+    }).mobiscroll('getInst');
+
+    function createAddPopup(elm)
+    {
+        $deleteButton.hide();
+        deleteEvent = true;
+        restoreEvent = false;
+
+        popup.setOptions({
+            headerText: 'New event',
+            buttons: [
+                'cancel',
+                {
+                    text: 'Add',
+                    keyCode: 'enter',
+                    handle: function () {
+                        calendar.updateEvent(tempEvent);
+
+                        calendar.navigate(tempEvent.start);
+
+                        deleteEvent = false;
+                        popup.close();
+                    },
+                    cssClass: 'mobiscroll'
+                }
+            ]
+        });
+        $title.mobiscroll('getInst').value = tempEvent.title;
+        $description.mobiscroll('getInst').value = '';
+        $allDay.mobiscroll('getInst').checked = tempEvent.allDay;
+        range.setVal([tempEvent.start, tempEvent.end]);
+        $tatusBusy.mobiscroll('getInst').checked = true;
+        range.setOptions({
+            controls: tempEvent.allDay ? ['date'] : ['datetime'],
+            responsive: tempEvent.allDay ? datePickerResponsve : datetimePickerResponsive
+        });
+        selectColor(getResource(tempEvent.resource).color, true);
+
+
+        popup.setOptions({anchor: elm});
+
+        popup.open();
+    }
+</script>
+
+</body>
+</html>
